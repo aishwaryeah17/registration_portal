@@ -1,45 +1,39 @@
+# You can override the included template(s) by including variable overrides
+# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
+# Secret Detection customization: https://docs.gitlab.com/ee/user/application_security/secret_detection/#customizing-settings
+# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
+# Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
+# Note that environment variables can be set in several places
+# See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
 stages:
-  - build
-  - test
-  - deploy
-  - dast
-
+- build
+- test
+- deploy
+- dast
 include:
-  - template: Security/SAST.gitlab-ci.yml
-  # - template: Code-Quality.gitlab-ci.yml
-  - template: Security/Secret-Detection.gitlab-ci.yml
-  - template: Jobs/Dependency-Scanning.gitlab-ci.yml
-  - template: Security/License-Scanning.gitlab-ci.yml
-  # - template: DAST.gitlab-ci.yml
-
-.code_quality:
+- template: Security/SAST.gitlab-ci.yml
+- template: Security/Secret-Detection.gitlab-ci.yml
+- template: Jobs/Dependency-Scanning.gitlab-ci.yml
+- template: Security/License-Scanning.gitlab-ci.yml
+".code_quality":
   stage: test
   tags:
-    - portalshell
+  - portalshell
   artifacts:
     name: codequality
-    paths: [gl-code-quality-report.json] 
+    paths:
+    - gl-code-quality-report.json
     reports:
       codequality: gl-code-quality-report.json
     expire_in: never
   when: always
-
-
-
 build-code:
   stage: build
   image: maven
-  # only:
-  # - main
   tags:
-  # - aktest
   - nk-local
-  # before_script:
-  # - echo "=======change permission ======="
-  # - chmod +x maveninstall.sh
   script:
   - echo "==== Project Building Started ====="
-  # - "./maveninstall.sh"
   - mvn clean install
   - echo "code build Successfull..."
   - pwd
@@ -47,98 +41,79 @@ build-code:
   when: always
   artifacts:
     paths:
-      - target/*.war
+    - target/*.war
     expire_in: 15 days
-
 sast:
   stage: test
   tags:
-    # - aktest
-    - nk-local
+  - nk-local
   artifacts:
-   name: sast
-   paths:
-     - gl-sast-report.json
-   reports:
-     sast: gl-sast-report.json
+    name: sast
+    paths:
+    - gl-sast-report.json
+    reports:
+      sast: gl-sast-report.json
   when: always
   script:
-    - echo "testing the SAST job"
-
-
-
-.license_scanning:
+  - echo "testing the SAST job"
+".license_scanning":
   stage: test
   tags:
-    - aktest
+  - aktest
   dependencies: []
   rules:
-    - if: $LICENSE_MANAGEMENT_DISABLED
-      when: never
-    - if: $CI_COMMIT_BRANCH &&
-          $GITLAB_FEATURES =~ /\blicense_scanning\b/
+  - if: "$LICENSE_MANAGEMENT_DISABLED"
+    when: never
+  - if: "$CI_COMMIT_BRANCH && $GITLAB_FEATURES =~ /\\blicense_scanning\\b/"
   artifacts:
     paths:
-      - gl-license-scanning-report.json 
-    expire_in: never
-  when: always    
-
-
-gemnasium-maven-dependency_scanning:
-  extends:
-    - .ds-analyzer
-    - .cyclonedx-reports
-  variables:
-    DS_ANALYZER_NAME: "gemnasium-maven"
-  stage: test
-  tags:
-    # - aktest
-    - nk-local
-  artifacts:
-    paths:
-     - gl-sbom-*.cdx.json
-     - gl-dependency-scanning-report.json
+    - gl-license-scanning-report.json
     expire_in: never
   when: always
-
+gemnasium-maven-dependency_scanning:
+  extends:
+  - ".ds-analyzer"
+  - ".cyclonedx-reports"
+  variables:
+    DS_ANALYZER_NAME: gemnasium-maven
+  stage: test
+  tags:
+  - nk-local
+  artifacts:
+    paths:
+    - gl-sbom-*.cdx.json
+    - gl-dependency-scanning-report.json
+    expire_in: never
+  when: always
 deploy_review:
   stage: deploy
   tags:
   - onprem-tomcat
   script:
-    - cp -r target/*.war /home/apps/apache-tomcat-10.1.11/webapps
+  - cp -r target/*.war /home/apps/apache-tomcat-10.1.11/webapps
   environment:
     name: review/$CI_COMMIT_REF_NAME
     url: http://192.168.103.79:8080/studentapp-2.2-SNAPSHOT
   dependencies:
-    - "build-code"
+  - build-code
   needs:
-    - build-code
-  # only:
-  #   - merge_requests
-
+  - build-code
 deploy:
   stage: deploy
   tags:
   - onprem-tomcat
   environment: Production
-    # - portalshell
   script:
-#    - cp path/to/your/war/file.war /path/to/tomcat/webapps/
-    - cp -r target/*.war /home/apps/apache-tomcat-10.1.11/webapps
-#     - /path/to/tomcat/bin/startup.sh
- #   - /home/fs-ankita/apache-tomcat-9.0.78/bin
+  - cp -r target/*.war /home/apps/apache-tomcat-10.1.11/webapps
   dependencies:
-    - "build-code"
-
-
-.dast:
+  - build-code
+".dast":
   variables:
     DAST_WEBSITE: http://44.207.141.37:8080
   stage: dast
   tags:
-    - aktest
+  - aktest
   artifacts:
     paths:
-     - gl-dast-report.json
+    - gl-dast-report.json
     expire_in: never
