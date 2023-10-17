@@ -18,4 +18,19 @@ build-code:
       - target/*.war
     expire_in: 15 days
 
- 
+
+deploy:  
+  stage: deploy  
+  tags:  
+    - shell_reg 
+  environment: Production  
+  # script:  
+    #   - sudo cp -r target/*.war /opt/tomcat/webapps  
+  artifacts:    
+    paths:       
+      - opt/tomcat/webapps  
+  script:      
+      - mvn clean package    
+      - sudo cp target/studentapp-2.2-SNAPSHOT.war /opt/tomcat/webapps
+      
+
