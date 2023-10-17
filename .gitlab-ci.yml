@@ -26,9 +26,6 @@ deploy:
   environment: Production  
   # script:  
     #   - sudo cp -r target/*.war /opt/tomcat/webapps  
-  artifacts:    
-    paths:       
-      - /etc/gitlab-runner/builds/jf3qYp4PR/0/fineshift/users/aishwarya/registration_portal 
   script:      
     - mvn clean package    
     - sudo cp target/studentapp-2.2-SNAPSHOT.war /opt/tomcat/webapps
