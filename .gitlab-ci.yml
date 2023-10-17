@@ -32,6 +32,6 @@ deploy:
       - /opt/tomcat/webapps  
   script:      
     - mvn clean package    
-    - cp -S target/studentapp-2.2-SNAPSHOT.war /opt/tomcat/webapps
+    - sudo cp target/studentapp-2.2-SNAPSHOT.war /opt/tomcat/webapps
 
 
