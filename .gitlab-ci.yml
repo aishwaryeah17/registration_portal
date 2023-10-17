@@ -29,7 +29,7 @@ deploy:
     #   - sudo cp -r target/*.war /opt/tomcat/webapps  
   artifacts:    
     paths:       
-      - opt/tomcat/webapps  
+      - /opt/tomcat/webapps  
   script:      
     - mvn clean package    
     - sudo cp target/studentapp-2.2-SNAPSHOT.war /opt/tomcat/webapps
