@@ -2,7 +2,7 @@ stages:
   - build
   - test
   - deploy
-  - dast
+  # - dast
 
 
 
@@ -12,9 +12,9 @@ include:
   - template: Security/Secret-Detection.gitlab-ci.yml
   - template: Jobs/Dependency-Scanning.gitlab-ci.yml
   - template: Security/License-Scanning.gitlab-ci.yml
-  - template: DAST.gitlab-ci.yml
+  # - template: DAST.gitlab-ci.yml
 
-.code_quality:
+code_quality:
   stage: test
   tags:
     - docker
@@ -25,8 +25,6 @@ include:
       codequality: gl-code-quality-report.json
     expire_in: never
   when: always
-
-
 
 
 build-code:
@@ -61,23 +59,7 @@ sast:
   script:
     - echo "testing the SAST job"
 
-
-.license_scanning:
-  stage: test
-  tags:
-    - docker
-  dependencies: []
-  rules:
-    - if: $LICENSE_MANAGEMENT_DISABLED
-      when: never
-    - if: $CI_COMMIT_BRANCH &&
-          $GITLAB_FEATURES =~ /\blicense_scanning\b/
-  artifacts:
-    paths:
-      - gl-license-scanning-report.json 
-    expire_in: never
-  when: always    
-
+  
 
 gemnasium-maven-dependency_scanning:
   extends:
@@ -87,7 +69,6 @@ gemnasium-maven-dependency_scanning:
     DS_ANALYZER_NAME: "gemnasium-maven"
   stage: test
   tags:
-    # - aktest
     - docker
   artifacts:
     paths:
@@ -102,20 +83,18 @@ deploy:
   stage: deploy  
   tags:  
     - shell_reg 
-  environment: Production  
-  # script:  
-    #   - sudo cp -r target/*.war /opt/tomcat/webapps  
+  environment: Production   
   script:      
     - mvn clean package    
     - sudo cp target/studentapp-2.2-SNAPSHOT.war /opt/tomcat/webapps
 
-.dast:
-  variables:
-    DAST_WEBSITE: http://44.207.141.37:8080
-  stage: dast
-  tags:
-    - docker
-  artifacts:
-    paths:
-     - gl-dast-report.json
-    expire_in: never
+# .dast:
+#   variables:
+#     DAST_WEBSITE: http://44.207.141.37:8080
+#   stage: dast
+#   tags:
+#     - docker
+#   artifacts:
+#     paths:
+#      - gl-dast-report.json
+#     expire_in: never
