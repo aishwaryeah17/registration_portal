@@ -19,7 +19,6 @@ build-code:
       - target/*.war
     expire_in: 15 days
 
-
 deploy:  
   stage: deploy  
   tags:  
