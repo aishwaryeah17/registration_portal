@@ -5,23 +5,24 @@ stages:
   - dast
 
 include:
-  # - template: Security/SAST.gitlab-ci.yml
-  - template: Code-Quality.gitlab-ci.yml
+  - template: Security/SAST.gitlab-ci.yml
+  # - template: Code-Quality.gitlab-ci.yml
   - template: Security/Secret-Detection.gitlab-ci.yml
   - template: Jobs/Dependency-Scanning.gitlab-ci.yml
   - template: Security/License-Scanning.gitlab-ci.yml
-  - template: DAST.gitlab-ci.yml
+  # - template: DAST.gitlab-ci.yml
 
-code_quality:
+.code_quality:
   stage: test
   tags:
-    - portalshell
+    - shell_reg
   artifacts:
     name: codequality
     paths: [gl-code-quality-report.json] 
     reports:
       codequality: gl-code-quality-report.json
     expire_in: never
+  when: always
 
 
 
@@ -31,7 +32,8 @@ build-code:
   # only:
   # - main
   tags:
-  - aktest
+  # - aktest
+  - shell_reg
   # before_script:
   # - echo "=======change permission ======="
   # - chmod +x maveninstall.sh
@@ -42,32 +44,33 @@ build-code:
   - echo "code build Successfull..."
   - pwd
   - ls
-  when: on_success
+  when: always
   artifacts:
     paths:
-    - target/*.war
+      - target/*.war
     expire_in: 15 days
 
-.sast:
+sast:
   stage: test
   tags:
-    - aktest
+    # - aktest
+    - shell_reg
   artifacts:
    name: sast
    paths:
      - gl-sast-report.json
    reports:
      sast: gl-sast-report.json
-   when: always
+  when: always
   script:
     - echo "testing the SAST job"
 
 
 
-license_scanning:
+.license_scanning:
   stage: test
   tags:
-    - aktest
+    - shell_reg
   dependencies: []
   rules:
     - if: $LICENSE_MANAGEMENT_DISABLED
@@ -77,7 +80,8 @@ license_scanning:
   artifacts:
     paths:
       - gl-license-scanning-report.json 
-    expire_in: never    
+    expire_in: never
+  when: always    
 
 
 gemnasium-maven-dependency_scanning:
@@ -88,38 +92,53 @@ gemnasium-maven-dependency_scanning:
     DS_ANALYZER_NAME: "gemnasium-maven"
   stage: test
   tags:
-    - aktest
+    # - aktest
+    - nk-local
   artifacts:
     paths:
      - gl-sbom-*.cdx.json
      - gl-dependency-scanning-report.json
-    expire_in: never 
+    expire_in: never
+  when: always
 
+deploy_review:
+  stage: deploy
+  tags:
+  - shell_reg
+  script:
+    - cp -r target/*.war /home/apps/apache-tomcat-10.1.11/webapps
+  environment:
+    name: review/$CI_COMMIT_REF_NAME
+    url: http://192.168.103.79:8080/studentapp-2.2-SNAPSHOT
+  dependencies:
+    - "build-code"
+  needs:
+    - build-code
+  # only:
+  #   - merge_requests
 
 deploy:
   stage: deploy
   tags:
-  - tomcat-shell
+  - shell_reg
   environment: Production
     # - portalshell
   script:
 #    - cp path/to/your/war/file.war /path/to/tomcat/webapps/
-    - sudo cp -r target/*.war /opt/apache-tomcat-9.0.78/webapps
+    - cp -r target/*.war /home/apps/apache-tomcat-10.1.11/webapps
 #     - /path/to/tomcat/bin/startup.sh
  #   - /home/fs-ankita/apache-tomcat-9.0.78/bin
+  dependencies:
+    - "build-code"
 
-dast:
+
+.dast:
   variables:
     DAST_WEBSITE: http://44.207.141.37:8080
   stage: dast
   tags:
-    - aktest
+    - shell_reg
   artifacts:
     paths:
      - gl-dast-report.json
-    expire_in: never 
-
-
-
-  
-  
+    expire_in: never
