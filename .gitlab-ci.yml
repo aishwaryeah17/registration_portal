@@ -1,5 +1,6 @@
 stages:
   - build
+  - deploy
 
 build-code:
   stage: build
@@ -30,7 +31,7 @@ deploy:
     paths:       
       - opt/tomcat/webapps  
   script:      
-      - mvn clean package    
-      - sudo cp target/studentapp-2.2-SNAPSHOT.war /opt/tomcat/webapps
-      
+    - mvn clean package    
+    - sudo cp target/studentapp-2.2-SNAPSHOT.war /opt/tomcat/webapps
+
 
