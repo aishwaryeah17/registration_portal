@@ -1,0 +1,42 @@
+stages:
+  - build
+  - deploy
+  - test
+
+build-code:
+  stage: build
+  image: maven
+  tags:
+  - shell_reg
+  script:
+  - echo "==== Project Building Started ====="
+  - mvn clean install
+  - echo "code build Successfull..."
+  - pwd
+  - ls
+  when: always
+  artifacts:
+    paths:
+      - target/*.war
+    expire_in: 15 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+
+deploy:  
+  stage: deploy  
+  tags:  
+    - shell_reg 
+  environment: Production   
+  script:      
+    - mvn clean package    
+    - sudo cp target/studentapp-2.2-SNAPSHOT.war /opt/tomcat/webapps
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  
+test:
+  stage: test
+  tags:
+    - shell_reg
+  script:
+    - echo "this job will run in target branch"
