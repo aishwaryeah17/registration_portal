@@ -1,10 +1,7 @@
 stages:
   - build
   - deploy
-  # - dast
-
-
-
+  - test
 
 build-code:
   stage: build
@@ -22,7 +19,8 @@ build-code:
     paths:
       - target/*.war
     expire_in: 15 days
-
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 
 deploy:  
@@ -33,14 +31,12 @@ deploy:
   script:      
     - mvn clean package    
     - sudo cp target/studentapp-2.2-SNAPSHOT.war /opt/tomcat/webapps
-
-# .dast:
-#   variables:
-#     DAST_WEBSITE: http://44.207.141.37:8080
-#   stage: dast
-#   tags:
-#     - docker
-#   artifacts:
-#     paths:
-#      - gl-dast-report.json
-#     expire_in: never
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  
+test:
+  stage: test
+  tags:
+    - shell_reg
+  script:
+    - echo "this job will run in target branch"
