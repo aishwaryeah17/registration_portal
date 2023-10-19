@@ -43,6 +43,7 @@ test:
   - shell_reg
   script:
   - echo "this job will run in target branch"
+  
 sast:
   stage: test
 include:
