@@ -1,8 +1,14 @@
+# You can override the included template(s) by including variable overrides
+# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
+# Secret Detection customization: https://docs.gitlab.com/ee/user/application_security/secret_detection/#customizing-settings
+# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
+# Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
+# Note that environment variables can be set in several places
+# See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
 stages:
-  - build
-  - deploy
-  - test
-
+- build
+- deploy
+- test
 build-code:
   stage: build
   image: maven
@@ -17,26 +23,27 @@ build-code:
   when: always
   artifacts:
     paths:
-      - target/*.war
+    - target/*.war
     expire_in: 15 days
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-
-
-deploy:  
-  stage: deploy  
-  tags:  
-    - shell_reg 
-  environment: Production   
-  script:      
-    - mvn clean package    
-    - sudo cp target/studentapp-2.2-SNAPSHOT.war /opt/tomcat/webapps
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+deploy:
+  stage: deploy
+  tags:
+  - shell_reg
+  environment: Production
+  script:
+  - mvn clean package
+  - sudo cp target/studentapp-2.2-SNAPSHOT.war /opt/tomcat/webapps
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-  
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 test:
   stage: test
   tags:
-    - shell_reg
+  - shell_reg
   script:
-    - echo "this job will run in target branch"
+  - echo "this job will run in target branch"
+sast:
+  stage: test
+include:
+- template: Security/SAST.gitlab-ci.yml
