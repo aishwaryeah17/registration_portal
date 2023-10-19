@@ -12,6 +12,7 @@ stages:
 
 include:
 - template: Security/SAST.gitlab-ci.yml
+
 build-code:
   stage: build
   image: maven
@@ -30,6 +31,7 @@ build-code:
     expire_in: 15 days
   rules:
   - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
 deploy:
   stage: deploy
   tags:
@@ -40,6 +42,8 @@ deploy:
   - sudo cp target/studentapp-2.2-SNAPSHOT.war /opt/tomcat/webapps
   rules:
   - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+  
 test:
   stage: test
   tags:
