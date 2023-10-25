@@ -1,0 +1,51 @@
+name: fineshift/users/aishwarya/registration_portal
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+  - cron: 0 16 * * *
+concurrency:
+  group: "${{ github.ref }}"
+  cancel-in-progress: true
+jobs:
+  build-code:
+    runs-on:
+      - self-hosted
+      - shell_reg
+    container:
+      image: maven
+    if: always()
+    timeout-minutes: 60
+    steps:
+    - uses: actions/checkout@v4.1.0
+      with:
+        fetch-depth: 20
+        lfs: true
+    - run: echo "==== Project Building Started ====="
+    - run: mvn clean install
+    - run: echo "code build Successfull..."
+    - run: pwd
+    - run: ls
+    - uses: actions/upload-artifact@v3.1.3
+      if: success()
+      with:
+        name: "${{ github.job }}"
+        retention-days: 15
+        path: target/*.war
+  deploy:
+    needs: build-code
+    runs-on:
+      - self-hosted
+      - shell_reg
+    if: ${{ github.event_name }} == "merge_request_event"
+    environment: Production
+    timeout-minutes: 60
+    steps:
+    - uses: actions/checkout@v4.1.0
+      with:
+        fetch-depth: 20
+        lfs: true
+    - uses: actions/download-artifact@v3.0.2
+    - run: mvn clean package
+    - run: sudo cp target/studentapp-2.2-SNAPSHOT.war /opt/tomcat/webapps
