@@ -1,5 +1,4 @@
 name: fineshift/users/aishwarya/registration_portal
-
 on:
   push:
   pull_request:
